@@ -109,6 +109,8 @@ textarea,input{font-family:'Outfit',sans-serif;}
 .blaunch{padding:7px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid var(--green);background:transparent;color:var(--green);white-space:nowrap;transition:background .15s,color .15s;flex-shrink:0;}
 .blaunch:hover,.blaunch.on{background:var(--green);color:#031009;}
 .bstop{padding:7px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid rgba(217,105,79,.4);background:transparent;color:var(--danger);white-space:nowrap;flex-shrink:0;}
+.bpen{padding:7px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid rgba(217,105,79,.5);background:transparent;color:var(--danger);white-space:nowrap;transition:background .15s;}
+.bpen:hover{background:rgba(217,105,79,.15);border-color:var(--danger);}
 .resp{padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--p2);margin-bottom:9px;}
 .rwho{font-size:11.5px;color:var(--green);font-weight:600;margin-bottom:4px;}
 .rtxt{font-size:12.5px;line-height:1.5;margin-bottom:6px;}
@@ -524,9 +526,9 @@ function renderPresHangman(){
         <button class="blaunch" id="hng-award">+10 pts a ${h.lastBy ? esc(h.lastBy) : '(elegir en leaderboard)'} y siguiente palabra</button>
       </div>` : ''}
     ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);"><b>Palabra perdida.</b> Era <b>${esc(cur.display)}</b>.</div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="blaunch" id="hng-retry">Reintentar palabra</button>
-        <button class="bgh" id="hng-skip">Saltar a siguiente</button>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="blaunch" id="hng-retry">Reintentar misma palabra</button>
+        <button class="bpen" id="hng-penalize">−5 pts a ${h.lastBy ? esc(h.lastBy) : '(sin jugador)'} y siguiente palabra</button>
       </div>` : ''}
   </div>`;
 }
@@ -623,9 +625,14 @@ function bindPresEvents(){
     d.hang.wrong = 0;
     await setData(d);
   };
-  const hSkip = document.getElementById('hng-skip');
-  if(hSkip) hSkip.onclick = async () => {
+  const hPenalize = document.getElementById('hng-penalize');
+  if(hPenalize) hPenalize.onclick = async () => {
     const d = await getDataFresh();
+    const loser = d.hang.lastBy;
+    if(loser && loser !== 'Presentador'){
+      d.lb = d.lb || {};
+      d.lb[loser] = Math.max(0, (d.lb[loser]||0) - 5);
+    }
     d.hang.idx = ((d.hang.idx||0) + 1) % HANGMAN_BANK.length;
     d.hang.guessed = [];
     d.hang.wrong = 0;
