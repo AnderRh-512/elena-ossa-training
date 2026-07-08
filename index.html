@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Elena Ossa · VEKTOR Training Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg:#0D1F1A;--panel:#13281F;--p2:#0A1A13;--line:#1F3B30;
+  --green:#1D9E75;--gdim:#155A41;--gg:rgba(29,158,117,.13);
+  --dark:#085041;--gold:#E0A458;--gol:rgba(224,164,88,.16);
+  --text:#F4F4F0;--muted:#8FA89D;--m2:#3A5B4E;--danger:#D9694F;
+  --r:14px;--rs:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;line-height:1.6;
+  background-image:radial-gradient(ellipse at 0% 0%,rgba(29,158,117,.10) 0%,transparent 55%),radial-gradient(ellipse at 100% 0%,rgba(224,164,88,.05) 0%,transparent 40%);}
+h1,h2,h3,h4{font-family:'Playfair Display',serif;}
+button{font-family:'Outfit',sans-serif;cursor:pointer;border:none;}
+textarea,input{font-family:'Outfit',sans-serif;}
+.hide{display:none!important;}
+
+/* BAR */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--line);background:rgba(13,31,26,.94);backdrop-filter:blur(10px);position:sticky;top:0;z-index:200;}
+.brand{display:flex;align-items:center;gap:9px;}
+.vk{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--green),var(--dark));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#031009;}
+.bname{font-size:11px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;font-weight:500;}
+.livepill{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:500;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,164,88,.6)}70%{box-shadow:0 0 0 8px rgba(224,164,88,0)}100%{box-shadow:0 0 0 0 rgba(224,164,88,0)}}
+
+/* JOIN */
+.join{min-height:90vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.jbox{max-width:500px;width:100%;}
+.eyebrow{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--green);margin-bottom:10px;}
+.jbox h1{font-size:clamp(26px,4vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;}
+.jsub{font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:6px;}
+.objbox{border-left:3px solid var(--green);border-radius:0 12px 12px 0;background:var(--gg);padding:13px 16px;margin:18px 0 24px;font-size:13.5px;line-height:1.65;color:var(--muted);}
+.objbox b{color:var(--green);}
+.rcard{display:block;width:100%;padding:18px 20px;margin-bottom:10px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);text-align:left;color:var(--text);transition:border-color .15s,background .15s;}
+.rcard:hover{border-color:var(--green);background:var(--p2);}
+.rct{font-size:15px;font-weight:600;margin-bottom:3px;}
+.rcd{font-size:12px;color:var(--muted);font-weight:300;}
+.ninp{width:100%;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--p2);color:var(--text);font-size:15px;margin-bottom:10px;transition:border-color .15s;}
+.ninp:focus{outline:none;border-color:var(--green);}
+.bpri{width:100%;padding:14px;border-radius:12px;background:var(--green);color:#031009;font-weight:700;font-size:15px;transition:opacity .15s;}
+.bpri:disabled{opacity:.3;cursor:not-allowed;}
+.bpri:not(:disabled):hover{opacity:.85;}
+.meettip{margin-top:18px;padding:14px 16px;border-radius:12px;background:rgba(29,158,117,.06);border:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.7;text-align:center;}
+.meettip strong{color:var(--text);}
+.namebtn{display:flex;flex-direction:column;align-items:center;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--p2);color:var(--text);font-size:14px;font-weight:600;transition:border-color .15s,background .15s;}
+.namebtn:hover{border-color:var(--green);background:var(--panel);}
+.namegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* RAIL */
+.railwrap{padding:14px 0 0;}
+.rail{display:flex;gap:3px;margin-bottom:8px;}
+.rseg{height:6px;border-radius:3px;background:var(--line);transition:background .3s;}
+.rseg.done{background:var(--gdim);}
+.rseg.active{background:var(--green);}
+.railmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.railcur{font-size:14px;font-weight:600;}
+.railinfo{font-size:11.5px;color:var(--muted);}
+.railbtns{display:flex;gap:7px;}
+.bgh{padding:8px 14px;border-radius:var(--rs);border:1px solid var(--line);background:transparent;color:var(--muted);font-size:12.5px;transition:border-color .15s,color .15s;}
+.bgh:hover:not(:disabled){border-color:var(--green);color:var(--text);}
+.bgh:disabled{opacity:.28;cursor:not-allowed;}
+
+/* GRID */
+.pgrid{display:grid;grid-template-columns:1fr 370px;gap:14px;padding:0 0 28px;align-items:start;}
+@media(max-width:950px){.pgrid{grid-template-columns:1fr;}}
+.wrap{max-width:1200px;margin:0 auto;padding:0 18px;}
+
+/* CARD */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:12px;}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.chead h3{font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:600;}
+.tag{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.tagt{color:var(--muted);border:1px solid var(--line);}
+.tagp{color:var(--green);border:1px solid var(--gdim);}
+.tagg{color:var(--gold);border:1px solid rgba(224,164,88,.35);}
+.taglive{color:var(--green);border:1px solid var(--gdim);}
+
+/* SCRIPT */
+.bh{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.bnum{width:42px;height:42px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--dark));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#031009;}
+.bht h2{font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;line-height:1.25;}
+.bhts{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.chip{padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:500;}
+.chipt{background:rgba(138,168,157,.1);color:var(--muted);border:1px solid var(--line);}
+.chipp{background:rgba(29,158,117,.1);color:var(--green);border:1px solid var(--gdim);}
+.hook{border-left:3px solid var(--gold);border-radius:0 12px 12px 0;background:var(--gol);padding:12px 15px;margin-bottom:13px;font-size:13.5px;line-height:1.65;}
+.hlbl{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600;display:block;margin-bottom:6px;}
+.slbl{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:9px;}
+.spt{padding:11px 14px;border-radius:var(--rs);margin-bottom:7px;background:var(--p2);border:1px solid var(--line);font-size:13px;line-height:1.65;}
+.spt b{color:var(--green);}
+.spt em{color:var(--gold);font-style:normal;}
+.tip{border-left:3px solid var(--green);border-radius:0 var(--rs) var(--rs) 0;background:var(--gg);padding:11px 14px;margin-top:13px;font-size:12.5px;line-height:1.6;color:var(--muted);}
+.tlbl{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-weight:600;display:block;margin-bottom:5px;}
+
+/* CONTROLS */
+.actr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--p2);margin-bottom:9px;}
+.art{font-size:13px;font-weight:600;}
+.ars{font-size:11px;color:var(--muted);margin-top:1px;}
+.blaunch{padding:7px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid var(--green);background:transparent;color:var(--green);white-space:nowrap;transition:background .15s,color .15s;flex-shrink:0;}
+.blaunch:hover,.blaunch.on{background:var(--green);color:#031009;}
+.bstop{padding:7px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid rgba(217,105,79,.4);background:transparent;color:var(--danger);white-space:nowrap;flex-shrink:0;}
+.resp{padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--p2);margin-bottom:9px;}
+.rwho{font-size:11.5px;color:var(--green);font-weight:600;margin-bottom:4px;}
+.rtxt{font-size:12.5px;line-height:1.5;margin-bottom:6px;}
+.schip{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11.5px;background:var(--gdim);color:var(--text);}
+
+/* LEADERBOARD */
+.lbrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);margin-bottom:5px;background:var(--p2);}
+.lbrk{width:20px;text-align:center;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;font-size:14px;}
+.lbnm{flex:1;font-size:13px;}
+.lbpt{font-weight:600;color:var(--green);font-size:13px;}
+.lbempty{color:var(--muted);font-size:12.5px;text-align:center;padding:14px 0;}
+
+/* HANGMAN */
+.hang-word{text-align:center;font-family:'Playfair Display',serif;font-size:clamp(28px,7vw,44px);letter-spacing:14px;color:var(--gold);margin:18px 0 12px;text-shadow:0 2px 12px rgba(224,164,88,.15);word-spacing:8px;}
+.hang-meta{text-align:center;font-size:12px;color:var(--muted);margin-bottom:12px;}
+.hang-meta b{color:var(--gold);}
+.hang-err{text-align:center;font-size:12px;color:var(--danger);margin:6px 0 14px;letter-spacing:1px;}
+.hang-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:14px 0;}
+@media(min-width:640px){.hang-grid{grid-template-columns:repeat(13,1fr);}}
+.hkey{aspect-ratio:1;border-radius:8px;background:var(--p2);border:1px solid var(--line);color:var(--text);font-family:'Outfit',sans-serif;font-weight:600;font-size:13px;transition:background .12s,border-color .12s;}
+.hkey:hover:not(:disabled){background:var(--panel);border-color:var(--green);}
+.hkey.hit{background:rgba(29,158,117,.18);border-color:var(--green);color:var(--green);}
+.hkey.miss{background:rgba(217,105,79,.14);border-color:rgba(217,105,79,.4);color:var(--danger);opacity:.6;}
+.hkey:disabled{cursor:default;}
+.hang-progress{margin:8px 0 4px;}
+.hang-lesson{border-left:3px solid var(--green);background:var(--gg);padding:12px 14px;border-radius:0 12px 12px 0;margin-top:14px;font-size:13px;color:var(--text);line-height:1.6;}
+
+/* PARTICIPANT */
+.pview{max-width:480px;margin:0 auto;padding:16px 16px 36px;}
+.pbadge{display:inline-block;padding:4px 12px;border-radius:20px;background:rgba(29,158,117,.1);border:1px solid var(--gdim);font-size:11px;color:var(--green);font-weight:500;margin-bottom:14px;}
+.wait{text-align:center;padding:60px 16px;}
+.wait .wi{font-size:38px;margin-bottom:14px;}
+.wait h3{font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;margin-bottom:8px;}
+.wait p{font-size:13px;color:var(--muted);line-height:1.6;}
+.rpsc{border-left:3px solid var(--gold);border-radius:0 13px 13px 0;background:var(--gol);padding:13px 15px;margin-bottom:13px;font-size:14px;line-height:1.65;}
+.rpsc b{color:var(--gold);}
+textarea.rpin{width:100%;min-height:120px;padding:13px;border-radius:13px;border:1px solid var(--line);background:var(--p2);color:var(--text);font-size:14.5px;resize:vertical;outline:none;transition:border-color .15s;}
+textarea.rpin:focus{border-color:var(--green);}
+.cc{font-size:11.5px;color:var(--muted);text-align:right;margin:3px 0 9px;}
+.bsend{padding:13px 22px;border-radius:12px;background:var(--green);color:#031009;font-weight:700;font-size:15px;transition:opacity .15s;width:100%;}
+.bsend:disabled{opacity:.3;cursor:not-allowed;}
+.bsend:not(:disabled):hover{opacity:.85;}
+.emresp{font-size:13px;color:var(--muted);text-align:center;padding:16px 0;}
+
+/* QUIZ */
+.qwrap{max-width:680px;margin:0 auto;}
+.qhead{margin-bottom:18px;}
+.qq{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;}
+.qqtxt{font-size:14.5px;font-weight:600;line-height:1.45;margin-bottom:12px;}
+.qopt{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;padding:12px 14px;margin-bottom:6px;border-radius:12px;border:1px solid var(--line);background:var(--p2);color:var(--text);font-size:13.5px;line-height:1.5;transition:border-color .15s,background .15s;}
+.qopt:hover{border-color:var(--green);background:var(--panel);}
+.qopt.sel{border-color:var(--green);background:rgba(29,158,117,.12);}
+.qopt.cor{border-color:var(--green);background:rgba(29,158,117,.18);}
+.qopt.wrg{border-color:var(--danger);background:rgba(217,105,79,.12);}
+.qm{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;margin-top:1px;transition:background .15s,border-color .15s;}
+.qopt.sel .qm,.qopt.cor .qm{background:var(--green);border-color:var(--green);}
+.qopt.wrg .qm{background:var(--danger);border-color:var(--danger);}
+.qsummary{text-align:center;padding:26px 20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-top:16px;}
+.qsummary .qscore{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;margin:6px 0;}
+.qsummary .qpct{font-size:14px;color:var(--muted);margin-bottom:12px;}
+.qsummary .qmsg{font-size:13.5px;color:var(--text);line-height:1.55;}
+
+.breset{padding:8px 14px;border-radius:var(--rs);border:1px solid rgba(217,105,79,.3);background:transparent;color:rgba(217,105,79,.65);font-size:12px;}
+.breset:hover{border-color:var(--danger);color:var(--danger);}
+.foot{text-align:center;padding:22px 10px;font-size:11px;color:var(--m2);}
+</style>
+</head>
+<body>
+<div id="R"></div>
+
+<script>
+/* ================================================================
+   FIREBASE CONFIG (client-side — apiKey pública es normal en Firebase)
+   ================================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDsLKoc0rAp7DuY_ERlIWAXP8AmAuo3AS8",
+  authDomain: "vektor-training-elena-ossa.firebaseapp.com",
+  databaseURL: "https://vektor-training-elena-ossa-default-rtdb.firebaseio.com",
+  projectId: "vektor-training-elena-ossa",
+  storageBucket: "vektor-training-elena-ossa.firebasestorage.app",
+  messagingSenderId: "301220631354",
+  appId: "1:301220631354:web:b78c59f68c6f7aea0a3603"
+};
+const ROOT = 'elena';
+
+/* ================================================================
+   CONTENIDO — Elena Ossa · Módulos 4 y 5
+   ================================================================ */
+const PLAYERS = ['Karen','Vanessa','Elena','Michelle'];
+
+const HANGMAN_BANK = [
+  {word:'VALORACION', display:'VALORACIÓN', replaces:'Consulta diagnóstica preliminar',
+   lesson:'Suena cálida, no clínica. La cliente entiende de inmediato que la vas a escuchar, no diagnosticarla.'},
+  {word:'CUIDADO', display:'CUIDADO', replaces:'Protocolo post-procedimiento',
+   lesson:'Habla de acompañamiento, no de una checklist médica. Refuerza confianza.'},
+  {word:'FRESCURA', display:'FRESCURA', replaces:'Revitalización dérmica',
+   lesson:'Vende un resultado visible y sensorial, no un tecnicismo caro.'},
+  {word:'GUIA', display:'GUÍA', replaces:'Asesoría especializada',
+   lesson:'Posiciona al equipo como acompañante del proceso, no como vendedor externo.'}
+];
+
+const QUIZ = [
+  {q:'¿Cuál es el principal peligro de la comunicación escrita en canales virtuales?',
+   opts:['Que los mensajes se demoran mucho.','La libre interpretación del tono y la falta de empatía visual si no se redacta con cuidado.','Que los clientes de Nueva York no leen español.'], cor:1},
+  {q:'Si un cliente se niega a depositar por Zelle por temor a fraudes, la respuesta correcta es:',
+   opts:['Decirle que si no deposita no lo atendemos.','Explicar que el depósito reserva su cabina exclusiva y se deduce del total, con confirmación inmediata.','Cancelar la interacción.'], cor:1},
+  {q:'¿Cuál es la palabra orgánica para "Consulta diagnóstica preliminar"?',
+   opts:['Evaluación técnica','Valoración','Análisis dermatológico'], cor:1},
+  {q:'Un prospecto de Queens pregunta por Instagram "¿Precio del Botox?". ¿Qué haces primero?',
+   opts:['Enviar la lista de precios completa.','Saludar cálidamente y hacer una pregunta de filtrado que active interés genuino.','Pedirle su dirección para enviarle catálogo.'], cor:1},
+  {q:'Palabra orgánica para "Protocolo post-procedimiento":',
+   opts:['Recuperación clínica','Cuidado','Régimen aftercare'], cor:1},
+  {q:'La filosofía "Aquel que habla mucho te quiere vender..." implica que:',
+   opts:['Nunca hay que hablar en el chat.','Preguntar activamente demuestra interés y guía la conversación hacia la solución.','Sólo enviar audios largos.'], cor:1},
+  {q:'Una clienta mayor dice "mejor no reservo" porque no usa Zelle. ¿Qué haces?',
+   opts:['Insistir hasta que instale la app.','Ofrecer alternativas cálidas: pago telefónico, enlace seguro o reserva en recepción.','Dejarla ir sin insistir.'], cor:1},
+  {q:'Palabra orgánica para "Revitalización dérmica":',
+   opts:['Renovación celular','Frescura','Estimulación epidermal'], cor:1},
+  {q:'En el cierre perfecto de una cita virtual NO puede faltar:',
+   opts:['Sólo la fecha.','Fecha, hora, indicaciones previas al tratamiento y despedida cálida.','Enviar la factura anticipada.'], cor:1},
+  {q:'Palabra orgánica para "Asesoría especializada":',
+   opts:['Consultoría técnica','Guía','Coaching estético'], cor:1}
+];
+
+const S = {
+  title:'Elena Ossa · Módulos 4 y 5',
+  sub:'Habilidades de comunicación no presencial · Sistema de Conversión Comercial',
+  obj:'Empatía escrita, blindaje en depósitos y cierre de compromiso perfecto — para el mercado NY Latino.',
+  blocks:[
+    { id:'b1', n:1, min:15, title:'Pilares de la comunicación empática',
+      hook:'Vamos a arrancar con los dos pilares que van a cambiar cómo el equipo escribe en el chat de Elena Ossa esta semana. [pausa] Ninguno tiene que ver con técnica de venta. Tienen que ver con cómo piensa quien lidera la conversación.',
+      script:[
+        '<b>Pilar 1:</b> «Aquel que habla mucho te quiere vender. Aquel que te pregunta mucho, te quiere ayudar.» Deja de lanzar precios fríos en el chat — quien pregunta lidera.',
+        '<b>Pilar 2:</b> «Cuidado con lo que escribes, por como se puede interpretar.» En un chat de spa, la falta de puntuación o palabras ambiguas cambian radicalmente el mensaje.',
+        '<b>Ejemplo cómico 1 — el "profundo" que se malinterpreta:</b> Cliente: <em>"Quiero un masaje de relajación profunda"</em>. ❌ Agente: <em>"Yo te lo doy bien profundo, no te preocupes 😉"</em> → ✅ <em>"Perfecto, nuestro masaje dura 60 min y libera tensión de espalda y cervicales."</em>',
+        '<b>Ejemplo cómico 2 — piedras calientes con emoji equivocado:</b> Cliente: <em>"¿Cuánto por las piedras calientes?"</em>. ❌ <em>"Bien caliente, te va a encantar 🔥🔥"</em> → ✅ <em>"Piedras de basalto a temperatura terapéutica para liberar tensión muscular. ¿Te reservo un cupo?"</em>',
+        '<b>Ejemplo cómico 3 — tono brusco por prisa:</b> Cliente: <em>"Necesito relajarme mucho"</em>. ❌ <em>"Ven que yo te relajo completa"</em> → ✅ <em>"Entiendo la necesidad. Te recomiendo el protocolo antiestrés de 90 min. ¿Prefieres mañana en la mañana o en la tarde?"</em>'
+      ],
+      tip:'Pregúntales al equipo: ¿qué frase que mandaron esta semana por WhatsApp podría malinterpretarse? Corregir en vivo vale más que la teoría.',
+      hangman:false, rp:null, quiz:false },
+
+    { id:'b2', n:2, min:15, title:'El Ahorcado Orgánico',
+      hook:'Cada palabra técnica de la industria estética espanta al cliente de Queens. Vamos a reemplazarlas por palabras orgánicas — las que la clienta usaría al hablar con su vecina. Es sincrónico: si Karen adivina una letra, todas la ven en tiempo real.',
+      script:[
+        'Palabra 1: <b>VALORACIÓN</b> reemplaza a <em>"Consulta diagnóstica preliminar"</em>.',
+        'Palabra 2: <b>CUIDADO</b> reemplaza a <em>"Protocolo post-procedimiento"</em>.',
+        'Palabra 3: <b>FRESCURA</b> reemplaza a <em>"Revitalización dérmica"</em>.',
+        'Palabra 4: <b>GUÍA</b> reemplaza a <em>"Asesoría especializada"</em>.',
+        'Regla: cada palabra resuelta = <b>+10 pts</b> a quien envió la última letra ganadora. 6 errores = palabra perdida (podés reintentar).'
+      ],
+      tip:'Cuando resuelvan cada palabra, pregunta: ¿en qué frase real de WhatsApp podrías haber usado esta palabra hoy?',
+      hangman:true, rp:null, quiz:false },
+
+    { id:'b3', n:3, min:12, title:'Caso 1 · El gancho comercial',
+      hook:'Un prospecto de Queens escribe por Instagram <em>"¿Precio del Botox?"</em>. El error de 9 de cada 10 agentes: mandan el precio y punto. La regla que ya vimos aplicada: quien pregunta lidera. Toca practicarlo.',
+      script:[
+        '<b>Situación:</b> Prospecto de Queens escribe por IG: <em>"¿Precio del Botox?"</em>.',
+        '<b>NO respondas con el precio.</b> El precio sin contexto pierde 8 de cada 10 veces.',
+        '<b>Estructura ganadora:</b> Saludo cálido + Pregunta de filtrado (¿primera vez? ¿zona a tratar? ¿evento próximo?) + Puente hacia una valoración.',
+        'La pregunta convierte al prospecto en un lead cualificado antes de que compare precios con otras clínicas.'
+      ],
+      tip:'Al recibir 2-3 respuestas, léelas en voz alta y pregunta al grupo: ¿cuál activa la regla "quien pregunta ayuda"?',
+      hangman:false, rp:{ id:'rp1', label:'Roleplay · Gancho por IG',
+        ctx:'La prospecto pregunta por IG: <b>"¿Precio del Botox?"</b><br>Respondele activando el gancho comercial — sin dar el precio de entrada.' },
+      quiz:false },
+
+    { id:'b4', n:4, min:12, title:'Caso 2 · La barrera del depósito Zelle',
+      hook:'La clienta ya estaba lista para agendar. Se le cae la venta cuando le pides el depósito de $20 USD por Zelle porque le teme a estafas online. El script de autoridad convierte esa objeción en confianza.',
+      script:[
+        '<b>Situación:</b> Clienta quiere agendar pero se resiste al depósito de $20 USD por Zelle. Miedo a estafa online.',
+        '<b>Script Vektor:</b> «Entiendo perfectamente tu cuidado, María. Elena Ossa es una clínica registrada en Nueva York. Este depósito de $20 garantiza que tu cabina y tu especialista queden reservados exclusivamente para ti, y se descuenta de tu tratamiento final. Al instante de recibirlo, nuestro sistema te enviará la confirmación digital oficial a tu celular.»',
+        'Tres elementos que suman confianza: <b>autoridad</b> ("clínica registrada"), <b>exclusividad</b> ("reservados para ti"), <b>reversibilidad</b> ("se descuenta del total").',
+        'El depósito no es un cargo — es un compromiso mutuo respaldado por infraestructura.'
+      ],
+      tip:'Si alguien pide "confía en nosotros" en su respuesta, corrígelo. Vamos con estructura y respaldo, no con súplica.',
+      hangman:false, rp:{ id:'rp2', label:'Roleplay · Objeción Zelle',
+        ctx:'La cliente responde: <b>"¿$20 por Zelle? Prefiero pagar el día que llegue, no me quiero arriesgar a que me estafen."</b><br>Ejecuta el script de autoridad.' },
+      quiz:false },
+
+    { id:'b5', n:5, min:12, title:'Caso 3 · La barrera tecnológica',
+      hook:'Una clienta mayor de Manhattan escribe <em>"Mejor no agendo nada"</em>. No tiene Zelle. Ver la app le da ansiedad. El protocolo alternativo rescata la cita en 2 mensajes.',
+      script:[
+        '<b>Situación:</b> Clienta mayor. Sin Zelle. Se abruma con banca digital. Dice <em>"Mejor no agendo nada"</em>.',
+        '<b>Protocolo alternativo:</b><br>• Enlace telefónico seguro cifrado.<br>• Procesamiento manual de tarjeta por teléfono en 2 min.<br>• Reserva presencial anticipada en recepción con efectivo o tarjeta.',
+        '<b>Script:</b> «No te preocupes, corazón. No necesitas Zelle para visitarnos. Podemos hacer tu reserva con total seguridad procesando tu tarjeta directamente por teléfono, o te guardo un cupo especial si prefieres pasar por recepción.»',
+        'Palabra clave: <b>alternativa</b>. Nunca "yo te enseño Zelle". La clienta no vino por educación digital, vino por un tratamiento.'
+      ],
+      tip:'Busca que ofrezcan al menos 2 caminos concretos. Un solo camino sigue siendo obligar.',
+      hangman:false, rp:{ id:'rp3', label:'Roleplay · Adultos mayores',
+        ctx:'La cliente responde: <b>"Mejor no agendo, no sé usar Zelle ni esas cosas de internet."</b><br>Ofrécele el protocolo alternativo con calidez.' },
+      quiz:false },
+
+    { id:'b6', n:6, min:12, title:'Caso 4 · El cierre de compromiso perfecto',
+      hook:'El depósito fue aceptado. La venta está hecha — pero no cerrada. El 30% de las citas se pierden en este último mensaje porque no confirmamos, no damos indicaciones, o no cerramos con calidez.',
+      script:[
+        '<b>Situación:</b> Depósito aceptado, cabina reservada. Toca ejecutar el cierre que asegura asistencia.',
+        '<b>Estructura ganadora:</b><br>1. Confirmación explícita de fecha, hora, especialista.<br>2. Indicaciones previas (sin maquillaje, hidratada, sin cafeína si es facial).<br>3. Despedida cálida con nombre.',
+        '<b>Ejemplo:</b> «Perfecto María, te confirmo tu valoración con Sofía el martes 15 a las 3 pm. Te recomiendo llegar sin maquillaje y bien hidratada. Nos vemos ese día ✨.»',
+        'Cero emojis genéricos. La despedida usa el nombre y confirma expectativa clara.'
+      ],
+      tip:'Si alguien manda solo "confirmado", pídele que reescriba con los 3 elementos (fecha/hora + indicaciones + despedida cálida).',
+      hangman:false, rp:{ id:'rp4', label:'Roleplay · Cierre perfecto',
+        ctx:'La cliente acaba de mandar el comprobante de Zelle.<br>Ejecuta el cierre completo (confirmación + indicaciones + despedida).' },
+      quiz:false },
+
+    { id:'quiz', n:7, min:10, title:'Evaluación Final · 10 preguntas',
+      hook:'Últimos minutos. Prueba individual de 10 preguntas. Cada respuesta correcta = <b>+2 pts</b> al leaderboard. Sale a mostrar quién dominó los pilares.',
+      script:[
+        'Cada agente responde en su celular en su ritmo.',
+        'Se ordenan por porcentaje al finalizar.',
+        'El top 3 se lleva reconocimiento del equipo.'
+      ],
+      tip:'Al terminar, felicita al top 3 y pide al último puesto que comparta la pregunta que más le costó — es donde vamos a poner foco la próxima sesión.',
+      hangman:false, rp:null, quiz:true },
+
+    { id:'cierre', n:8, min:5, title:'Cierre y compromisos',
+      hook:'', script:[], tip:'', hangman:false, rp:null, quiz:false }
+  ]
+};
+
+/* ================================================================
+   ESTADO GLOBAL
+   ================================================================ */
+let role='', name='';
+let gCtrl = {bid:'b1', phase:'idle', aid:null};
+let gData = emptyData();
+let db = null;
+let listenerOn = false;
+const $R = document.getElementById('R');
+
+function emptyData(){ return {lb:{}, hang:{idx:0, guessed:[], wrong:0, lastBy:null}, rp:{}, quiz:{}, closing:{}}; }
+const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bById = id => S.blocks.find(b => b.id===id) || S.blocks[0];
+const bIdx = id => S.blocks.findIndex(b => b.id===id);
+const totalMin = S.blocks.reduce((a,b) => a + (b.min||0), 0);
+
+/* ================================================================
+   FIREBASE INIT + LISTENER
+   ================================================================ */
+function initFirebase(){
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    return true;
+  }catch(e){ console.error('Firebase init', e); return false; }
+}
+
+function startListener(){
+  if(listenerOn || !db) return;
+  listenerOn = true;
+  let prevSig = '';
+  db.ref(ROOT).on('value', snap => {
+    const val = snap.val() || {};
+    const newCtrl = val.ctrl || {bid:'b1', phase:'idle', aid:null};
+    const newData = val.data || emptyData();
+    // Ensure nested structure exists
+    newData.lb = newData.lb || {};
+    newData.hang = newData.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
+    newData.rp = newData.rp || {};
+    newData.quiz = newData.quiz || {};
+    newData.closing = newData.closing || {};
+    const sig = JSON.stringify(newCtrl) + '|' + JSON.stringify(newData);
+    if(sig === prevSig) return;
+    prevSig = sig;
+    gCtrl = newCtrl;
+    gData = newData;
+    if(role === 'pres') renderPres();
+    else if(role === 'part') renderPart();
+  }, e => console.error('FB listener', e));
+}
+
+async function setCtrl(c){ gCtrl = c; if(db) await db.ref(`${ROOT}/ctrl`).set(c); }
+async function setData(d){ gData = d; if(db) await db.ref(`${ROOT}/data`).set(d); }
+async function getDataFresh(){
+  if(!db) return gData;
+  try{ const snap = await db.ref(`${ROOT}/data`).once('value'); return snap.val() || emptyData(); }
+  catch(e){ return gData; }
+}
+
+/* ================================================================
+   JOIN SCREEN
+   ================================================================ */
+function renderJoin(){
+  $R.innerHTML = `
+  <div class="bar">
+    <div class="brand"><div class="vk">V</div><div class="bname">VEKTOR · Elena Ossa Training</div></div>
+    <div class="livepill"><div class="dot"></div>En Vivo</div>
+  </div>
+  <div class="join">
+    <div class="jbox">
+      <div class="eyebrow">SC · Sesión Live · Módulos 4 y 5</div>
+      <h1>${esc(S.title)}</h1>
+      <p class="jsub">${esc(S.sub)}</p>
+      <div class="objbox">${S.obj}</div>
+      <button class="rcard" id="bpres"><div class="rct">Soy el presentador</div><div class="rcd">Controlo la sesión desde mi pantalla compartida en Meet</div></button>
+      <div id="pzone">
+        <button class="rcard" id="bpart"><div class="rct">Soy del equipo Elena Ossa</div><div class="rcd">Participo desde mi celular</div></button>
+      </div>
+      <div class="meettip"><strong>¿Cómo funciona?</strong><br>El presentador comparte esta pantalla en Meet. El equipo abre el mismo link en su celular y elige "equipo Elena Ossa".<br>Sin cuenta, sin descargas.</div>
+    </div>
+  </div>`;
+  document.getElementById('bpres').onclick = () => { role='pres'; name='Presentador'; startListener(); renderPres(); };
+  document.getElementById('bpart').onclick = () => {
+    document.getElementById('pzone').innerHTML = `
+      <div class="rcard" style="cursor:default;"><div class="rct">¿Quién eres?</div><div class="rcd" style="margin-bottom:10px;">Selecciona tu nombre para arrancar</div>
+      <div class="namegrid">
+        ${PLAYERS.map(p => `<button class="namebtn" data-nm="${p}">${p}</button>`).join('')}
+      </div></div>`;
+    document.querySelectorAll('.namebtn').forEach(b => {
+      b.onclick = () => { name = b.dataset.nm; role='part'; startListener(); renderPart(); };
+    });
+  };
+}
+
+/* ================================================================
+   PRESENTER
+   ================================================================ */
+function renderPres(){
+  const block = bById(gCtrl.bid);
+  const idx = bIdx(gCtrl.bid);
+  const isCierre = block.id === 'cierre';
+  const doneMin = S.blocks.slice(0,idx).reduce((a,b) => a + (b.min||0), 0);
+  const railSegs = S.blocks.map((_,i) => {
+    let c = 'rseg'; if(i<idx) c+=' done'; else if(i===idx) c+=' active';
+    return `<div class="${c}" style="flex:${S.blocks[i].min||8}"></div>`;
+  }).join('');
+
+  let scriptCol = '', ctrlCol = '';
+
+  if(!isCierre){
+    const spts = block.script.map(s => `<div class="spt">${s}</div>`).join('');
+    scriptCol = `<div>
+      <div class="card">
+        <div class="bh"><div class="bnum">${block.n}</div><div class="bht"><h2>${esc(block.title)}</h2><div class="bhts">${block.min} min · ${doneMin}min acumulados de ${totalMin}</div></div></div>
+        ${block.hook ? `<div class="hook"><span class="hlbl">🎯 Cómo abrir este bloque</span>${esc(block.hook)}</div>` : ''}
+        ${spts ? `<div class="slbl">GUION · PUNTOS CLAVE</div>${spts}` : ''}
+        ${block.tip ? `<div class="tip"><span class="tlbl">💡 Tip de facilitación</span>${esc(block.tip)}</div>` : ''}
+      </div>
+    </div>`;
+
+    // Right column: activities per block type
+    let activities = '';
+    if(block.hangman){
+      activities = renderPresHangman();
+    } else if(block.rp){
+      activities = renderPresRoleplay(block);
+    } else if(block.quiz){
+      activities = renderPresQuiz();
+    }
+
+    ctrlCol = `<div>
+      ${activities}
+      <div class="card"><div class="chead"><h3>🏆 Leaderboard</h3><span class="tag taglive">En vivo</span></div>${lbHTML(gData.lb)}</div>
+      <div style="text-align:right;margin-top:4px;"><button class="breset" id="bres">Reiniciar datos de sesión</button></div>
+    </div>`;
+  } else {
+    scriptCol = `<div>
+      <div class="card">
+        <div class="bh"><div class="bnum" style="font-size:18px;">✓</div><div class="bht"><h2>Cierre y compromisos</h2><div class="bhts">Sesión completa · ${totalMin} min</div></div></div>
+        <p style="font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:14px;">Pedile a cada persona un <b>compromiso concreto</b> para esta semana en su forma de escribir por WhatsApp. Compartí el leaderboard final y cerrá con reconocimiento al top 3.</p>
+      </div>
+    </div>`;
+    ctrlCol = `<div><div class="card"><div class="chead"><h3>🏆 Leaderboard Final</h3><span class="tag tagg">Elena Ossa</span></div>${lbHTML(gData.lb)}</div>
+      <div style="text-align:right;margin-top:4px;"><button class="breset" id="bres">Reiniciar datos de sesión</button></div></div>`;
+  }
+
+  $R.innerHTML = `
+  <div class="bar">
+    <div class="brand"><div class="vk">V</div><div class="bname">Elena Ossa · Sesión Live</div></div>
+    <div class="livepill"><div class="dot"></div>Clase en curso · Meet</div>
+  </div>
+  <div class="wrap">
+    <div class="railwrap">
+      <div class="rail">${railSegs}</div>
+      <div class="railmeta">
+        <div><div class="railcur">${esc(isCierre ? 'Cierre' : block.title)}</div><div class="railinfo">Bloque ${idx+1} de ${S.blocks.length}</div></div>
+        <div class="railbtns">
+          <button class="bgh" id="rp" ${idx<=0?'disabled':''}>← Anterior</button>
+          <button class="bgh" id="rn" ${idx>=S.blocks.length-1?'disabled':''}>Siguiente →</button>
+        </div>
+      </div>
+    </div>
+    <div class="pgrid">${scriptCol}${ctrlCol}</div>
+  </div>
+  <div class="foot">VEKTOR Consulting · SC · Elena Ossa · Módulos 4 y 5</div>`;
+
+  bindPresEvents();
+}
+
+function renderPresHangman(){
+  const h = gData.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
+  const cur = HANGMAN_BANK[h.idx || 0];
+  const guessedSet = new Set(h.guessed || []);
+  const displayWord = cur.word.split('').map(l => guessedSet.has(l) ? l : '_').join(' ');
+  const solved = ![...displayWord].includes('_');
+  const lost = (h.wrong||0) >= 6;
+
+  const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
+    const hit = guessedSet.has(letter) && cur.word.includes(letter);
+    const miss = guessedSet.has(letter) && !cur.word.includes(letter);
+    const cls = 'hkey' + (hit?' hit':'') + (miss?' miss':'');
+    return `<button class="${cls}" data-hk="${letter}" ${guessedSet.has(letter)?'disabled':''}>${letter}</button>`;
+  }).join('');
+
+  return `<div class="card">
+    <div class="chead"><h3>🎯 Ahorcado orgánico · Palabra ${(h.idx||0)+1}/${HANGMAN_BANK.length}</h3><span class="tag taglive">Vivo</span></div>
+    <div class="hang-meta">Reemplaza el tecnicismo: <b>${esc(cur.replaces)}</b></div>
+    <div class="hang-word">${displayWord}</div>
+    <div class="hang-err">Errores: ${h.wrong||0} / 6 ${h.lastBy ? `· última letra: <b>${esc(h.lastBy)}</b>` : ''}</div>
+    <div class="hang-grid">${grid}</div>
+    ${solved ? `<div class="hang-lesson"><b>¡Resuelto!</b> ${esc(cur.lesson)}</div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="blaunch" id="hng-award">+10 pts a ${h.lastBy ? esc(h.lastBy) : '(elegir en leaderboard)'} y siguiente palabra</button>
+      </div>` : ''}
+    ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);"><b>Palabra perdida.</b> Era <b>${esc(cur.display)}</b>.</div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="blaunch" id="hng-retry">Reintentar palabra</button>
+        <button class="bgh" id="hng-skip">Saltar a siguiente</button>
+      </div>` : ''}
+  </div>`;
+}
+
+function renderPresRoleplay(block){
+  const rp = block.rp;
+  const isOn = gCtrl.phase === 'rp' && gCtrl.aid === rp.id;
+  const responses = ((gData.rp||{})[rp.id]||{}).responses || {};
+  const entries = Object.entries(responses);
+  const respHTML = entries.length === 0
+    ? '<div class="emresp">Esperando respuestas del equipo...</div>'
+    : entries.map(([n,r]) => `<div class="resp">
+        <div class="rwho">${esc(n)}</div>
+        <div class="rtxt">${esc(r.text||'')}</div>
+        <span class="schip">⭐ +15 pts sumados</span>
+      </div>`).join('');
+
+  return `<div class="card">
+    <div class="chead"><h3>🎭 ${esc(rp.label)}</h3><span class="tag tagp">Roleplay</span></div>
+    <div class="actr">
+      <div><div class="art">Activar roleplay</div><div class="ars">Cada agente responde desde su celular</div></div>
+      ${isOn
+        ? '<button class="bstop" id="rp-stop">Cerrar</button>'
+        : '<button class="blaunch" id="rp-launch">Lanzar</button>'}
+    </div>
+    ${isOn ? respHTML : ''}
+    ${isOn && entries.length > 0 ? '<button class="bgh" id="rp-clear" style="margin-top:8px;font-size:12px;">Limpiar respuestas del caso</button>' : ''}
+  </div>`;
+}
+
+function renderPresQuiz(){
+  const q = gData.quiz || {};
+  const isOn = gCtrl.phase === 'quiz';
+  const entries = Object.entries(q).filter(([_,v]) => v && v.submitted);
+  return `<div class="card">
+    <div class="chead"><h3>📊 Evaluación 10 preguntas</h3><span class="tag tagg">Quiz</span></div>
+    <div class="actr">
+      <div><div class="art">Activar evaluación</div><div class="ars">Cada agente responde en su celular</div></div>
+      ${isOn
+        ? '<button class="bstop" id="qz-stop">Cerrar</button>'
+        : '<button class="blaunch" id="qz-launch">Lanzar</button>'}
+    </div>
+    ${entries.length === 0 ? '<div class="emresp">Esperando respuestas...</div>'
+      : entries.sort((a,b) => b[1].score - a[1].score).map(([n,v]) => {
+          const pct = Math.round((v.score/QUIZ.length)*100);
+          return `<div class="resp"><div class="rwho">${esc(n)}</div><div class="rtxt">${v.score}/${QUIZ.length} · ${pct}%</div><span class="schip">+${v.score*2} pts</span></div>`;
+        }).join('')}
+  </div>`;
+}
+
+function bindPresEvents(){
+  const rp = document.getElementById('rp'), rn = document.getElementById('rn');
+  if(rp) rp.onclick = () => moveBlock(-1);
+  if(rn) rn.onclick = () => moveBlock(1);
+  const bres = document.getElementById('bres');
+  if(bres) bres.onclick = async () => {
+    if(confirm('¿Borrar todos los puntos, respuestas y evaluaciones?')){
+      await setData(emptyData());
+      await setCtrl({bid:'b1', phase:'idle', aid:null});
+    }
+  };
+  // Hangman
+  document.querySelectorAll('[data-hk]').forEach(b => {
+    b.onclick = async () => {
+      const letter = b.dataset.hk;
+      const d = await getDataFresh();
+      const h = d.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
+      if((h.guessed||[]).includes(letter)) return;
+      const cur = HANGMAN_BANK[h.idx||0];
+      h.guessed = [...new Set([...(h.guessed||[]), letter])].sort();
+      h.lastBy = name; // presenter click attributed to Presentador
+      if(!cur.word.includes(letter)) h.wrong = (h.wrong||0) + 1;
+      d.hang = h;
+      await setData(d);
+    };
+  });
+  const hAward = document.getElementById('hng-award');
+  if(hAward) hAward.onclick = async () => {
+    const d = await getDataFresh();
+    const h = d.hang;
+    const cur = HANGMAN_BANK[h.idx||0];
+    const winner = h.lastBy;
+    if(winner && winner !== 'Presentador') d.lb[winner] = (d.lb[winner]||0) + 10;
+    h.idx = ((h.idx||0) + 1) % HANGMAN_BANK.length;
+    h.guessed = [];
+    h.wrong = 0;
+    h.lastBy = null;
+    await setData(d);
+  };
+  const hRetry = document.getElementById('hng-retry');
+  if(hRetry) hRetry.onclick = async () => {
+    const d = await getDataFresh();
+    d.hang.guessed = [];
+    d.hang.wrong = 0;
+    await setData(d);
+  };
+  const hSkip = document.getElementById('hng-skip');
+  if(hSkip) hSkip.onclick = async () => {
+    const d = await getDataFresh();
+    d.hang.idx = ((d.hang.idx||0) + 1) % HANGMAN_BANK.length;
+    d.hang.guessed = [];
+    d.hang.wrong = 0;
+    d.hang.lastBy = null;
+    await setData(d);
+  };
+  // Roleplay
+  const rpLaunch = document.getElementById('rp-launch');
+  if(rpLaunch) rpLaunch.onclick = async () => await setCtrl({...gCtrl, phase:'rp', aid:bById(gCtrl.bid).rp.id});
+  const rpStop = document.getElementById('rp-stop');
+  if(rpStop) rpStop.onclick = async () => await setCtrl({...gCtrl, phase:'idle', aid:null});
+  const rpClear = document.getElementById('rp-clear');
+  if(rpClear) rpClear.onclick = async () => {
+    if(!confirm('¿Limpiar todas las respuestas de este caso?')) return;
+    const d = await getDataFresh();
+    const rid = bById(gCtrl.bid).rp.id;
+    if(d.rp && d.rp[rid]) d.rp[rid].responses = {};
+    await setData(d);
+  };
+  // Quiz
+  const qzLaunch = document.getElementById('qz-launch');
+  if(qzLaunch) qzLaunch.onclick = async () => await setCtrl({...gCtrl, phase:'quiz', aid:null});
+  const qzStop = document.getElementById('qz-stop');
+  if(qzStop) qzStop.onclick = async () => await setCtrl({...gCtrl, phase:'idle', aid:null});
+}
+
+function lbHTML(lb){
+  const e = Object.entries(lb||{}).sort((a,b) => b[1]-a[1]);
+  if(!e.length) return '<div class="lbempty">Los puntos aparecen acá en tiempo real.</div>';
+  return e.map(([n,p],i) => `<div class="lbrow"><div class="lbrk">${i+1}</div><div class="lbnm">${esc(n)}</div><div class="lbpt">${p} pts</div></div>`).join('');
+}
+
+async function moveBlock(delta){
+  const idx = bIdx(gCtrl.bid);
+  const ni = Math.min(S.blocks.length-1, Math.max(0, idx+delta));
+  await setCtrl({bid:S.blocks[ni].id, phase:'idle', aid:null});
+}
+
+/* ================================================================
+   PARTICIPANT
+   ================================================================ */
+function renderPart(){
+  const block = bById(gCtrl.bid);
+  const idx = bIdx(gCtrl.bid);
+  const isCierre = block.id === 'cierre';
+  const railSegs = S.blocks.map((_,i) => {
+    let c = 'rseg'; if(i<idx) c+=' done'; else if(i===idx) c+=' active';
+    return `<div class="${c}" style="flex:${S.blocks[i].min||8}"></div>`;
+  }).join('');
+
+  let content = '';
+  if(isCierre){
+    content = renderPartClosing();
+  } else if(block.hangman){
+    content = renderPartHangman();
+  } else if(block.rp && gCtrl.phase === 'rp' && gCtrl.aid === block.rp.id){
+    content = renderPartRoleplay(block);
+  } else if(block.quiz && gCtrl.phase === 'quiz'){
+    content = renderPartQuiz();
+  } else {
+    content = `<div class="wait"><div class="wi">📲</div><h3>${esc(block.title)}</h3><p>Seguí la explicación en la pantalla del presentador.<br>Cuando lance una actividad, aparece acá.</p></div>`;
+  }
+
+  $R.innerHTML = `
+  <div class="bar">
+    <div class="brand"><div class="vk">V</div><div class="bname">${esc(name)}</div></div>
+    <div class="livepill"><div class="dot"></div>En Vivo</div>
+  </div>
+  <div class="pview">
+    <div class="pbadge">Bloque ${idx+1} de ${S.blocks.length}</div>
+    <div class="rail" style="margin-bottom:14px;">${railSegs}</div>
+    ${content}
+  </div>
+  <div class="foot">VEKTOR · Elena Ossa · Módulos 4 y 5</div>`;
+
+  bindPartEvents(block);
+}
+
+function renderPartHangman(){
+  const h = gData.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
+  const cur = HANGMAN_BANK[h.idx||0];
+  const guessedSet = new Set(h.guessed||[]);
+  const displayWord = cur.word.split('').map(l => guessedSet.has(l) ? l : '_').join(' ');
+  const solved = ![...displayWord].includes('_');
+  const lost = (h.wrong||0) >= 6;
+  const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
+    const hit = guessedSet.has(letter) && cur.word.includes(letter);
+    const miss = guessedSet.has(letter) && !cur.word.includes(letter);
+    const cls = 'hkey' + (hit?' hit':'') + (miss?' miss':'');
+    return `<button class="${cls}" data-hk="${letter}" ${guessedSet.has(letter) || solved || lost ? 'disabled':''}>${letter}</button>`;
+  }).join('');
+  return `<div class="card">
+    <div class="chead"><h3>🎯 Ahorcado orgánico</h3><span class="tag taglive">Palabra ${(h.idx||0)+1}/${HANGMAN_BANK.length}</span></div>
+    <div class="hang-meta">Reemplaza: <b>${esc(cur.replaces)}</b></div>
+    <div class="hang-word">${displayWord}</div>
+    <div class="hang-err">Errores del equipo: ${h.wrong||0} / 6 ${h.lastBy?`· última: <b>${esc(h.lastBy)}</b>`:''}</div>
+    <div class="hang-grid">${grid}</div>
+    ${solved ? `<div class="hang-lesson"><b>¡Resuelto!</b> ${esc(cur.lesson)}</div>` : ''}
+    ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);">Palabra perdida. Era <b>${esc(cur.display)}</b>. El presentador puede reintentar.</div>` : ''}
+  </div>`;
+}
+
+function renderPartRoleplay(block){
+  const rp = block.rp;
+  const responses = ((gData.rp||{})[rp.id]||{}).responses || {};
+  const mine = responses[name];
+  if(mine && mine.text){
+    return `<div class="card">
+      <div class="rpsc">${rp.ctx}</div>
+      <div style="margin-top:10px;padding:14px;background:var(--p2);border:1px solid var(--gdim);border-radius:12px;">
+        <div style="font-size:11px;color:var(--green);letter-spacing:1.5px;margin-bottom:6px;">TU RESPUESTA · +15 pts</div>
+        <div style="font-size:13.5px;line-height:1.6;">${esc(mine.text)}</div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:10px;">Esperando que el presentador comente las respuestas del grupo.</p>
+    </div>`;
+  }
+  return `<div class="card">
+    <div class="chead"><h3>${esc(rp.label)}</h3><span class="tag tagg">Roleplay</span></div>
+    <div class="rpsc">${rp.ctx}</div>
+    <textarea class="rpin" id="rpta" placeholder="Escribí tu respuesta como lo harías en la conversación real..." maxlength="600"></textarea>
+    <div class="cc" id="cc">0 / 600</div>
+    <button class="bsend" id="bts" disabled>Enviar respuesta</button>
+  </div>`;
+}
+
+function renderPartQuiz(){
+  const my = (gData.quiz||{})[name];
+  if(my && my.submitted){
+    const pct = Math.round((my.score/QUIZ.length)*100);
+    let msg = '';
+    if(pct >= 80) msg = '¡Excelente! Dominaste los pilares. ✨';
+    else if(pct >= 60) msg = 'Bien encaminada. Repasa los casos que fallaste.';
+    else msg = 'Toca revisar los pilares. La próxima sesión ponemos foco acá.';
+    return `<div class="qsummary">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">Tu resultado</div>
+      <div class="qscore">${my.score}/${QUIZ.length}</div>
+      <div class="qpct">${pct}% · +${my.score*2} pts al leaderboard</div>
+      <div class="qmsg">${msg}</div>
+    </div>`;
+  }
+  return `<div class="qwrap">
+    <div class="qhead"><div class="eyebrow">10 preguntas · Control de comando</div><h3 style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;">Evaluación final</h3></div>
+    ${QUIZ.map((item,idx) => `
+      <div class="qq">
+        <div class="qqtxt">${idx+1}. ${esc(item.q)}</div>
+        ${item.opts.map((o,i) => `<button class="qopt" data-qi="${idx}" data-oi="${i}"><div class="qm"></div><span>${esc(o)}</span></button>`).join('')}
+      </div>`).join('')}
+    <button class="bsend" id="quiz-send" style="margin-top:14px;" disabled>Enviar evaluación</button>
+  </div>`;
+}
+
+function renderPartClosing(){
+  return `<div class="card">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:17px;margin-bottom:8px;">¡Gracias por la sesión! 🎉</h3>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Compartí con el equipo tu compromiso para esta semana en la conversación de Meet.</p>
+    <div style="margin-top:14px;"><div class="chead"><h3>🏆 Leaderboard Final</h3></div>${lbHTML(gData.lb)}</div>
+  </div>`;
+}
+
+function bindPartEvents(block){
+  // Hangman letter clicks
+  document.querySelectorAll('[data-hk]').forEach(b => {
+    b.onclick = async () => {
+      const letter = b.dataset.hk;
+      const d = await getDataFresh();
+      const h = d.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
+      if((h.guessed||[]).includes(letter)) return;
+      const cur = HANGMAN_BANK[h.idx||0];
+      h.guessed = [...new Set([...(h.guessed||[]), letter])].sort();
+      h.lastBy = name;
+      if(!cur.word.includes(letter)) h.wrong = (h.wrong||0) + 1;
+      d.hang = h;
+      await setData(d);
+    };
+  });
+
+  // Roleplay
+  const rpta = document.getElementById('rpta'), bts = document.getElementById('bts'), cc = document.getElementById('cc');
+  if(rpta && bts){
+    rpta.addEventListener('input', () => {
+      const l = rpta.value.length;
+      if(cc) cc.textContent = `${l} / 600`;
+      bts.disabled = l < 10;
+    });
+    bts.onclick = async () => {
+      const txt = rpta.value.trim();
+      if(!txt) return;
+      bts.disabled = true; bts.textContent = 'Enviando...';
+      const d = await getDataFresh();
+      const rid = block.rp.id;
+      d.rp[rid] = d.rp[rid] || {responses:{}};
+      d.rp[rid].responses = d.rp[rid].responses || {};
+      d.rp[rid].responses[name] = {text:txt};
+      d.lb[name] = (d.lb[name]||0) + 15;
+      await setData(d);
+    };
+  }
+
+  // Quiz answer clicks
+  const answers = {};
+  document.querySelectorAll('.qopt').forEach(b => {
+    b.onclick = () => {
+      const qi = b.dataset.qi;
+      answers[qi] = parseInt(b.dataset.oi, 10);
+      document.querySelectorAll(`.qopt[data-qi="${qi}"]`).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+      const done = QUIZ.every((_,i) => answers[i] !== undefined);
+      const send = document.getElementById('quiz-send');
+      if(send) send.disabled = !done;
+    };
+  });
+  const qsend = document.getElementById('quiz-send');
+  if(qsend){
+    qsend.onclick = async () => {
+      qsend.disabled = true; qsend.textContent = 'Guardando...';
+      let score = 0;
+      QUIZ.forEach((item,i) => { if(answers[i] === item.cor) score++; });
+      const d = await getDataFresh();
+      d.quiz[name] = {answers: Object.values(answers), score, submitted:true};
+      d.lb[name] = (d.lb[name]||0) + score * 2;
+      await setData(d);
+    };
+  }
+}
+
+/* ================================================================
+   BOOT
+   ================================================================ */
+if(initFirebase()){
+  startListener();
+  renderJoin();
+} else {
+  document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#F4F4F0;font-family:Outfit,sans-serif;">Error inicializando Firebase. Revisa la consola del navegador.</div>';
+}
+</script>
+</body>
+</html>
