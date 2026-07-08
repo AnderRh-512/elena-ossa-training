@@ -1,7 +1,6 @@
 import streamlit as st
 import time
-import firebase_admin
-from firebase_admin import credentials, db as fbdb
+import requests
 
 # ============================================================
 # CONFIGURACION DE PAGINA
@@ -95,7 +94,7 @@ hr { border-color: var(--line) !important; opacity: 0.6 !important; }
 
 
 # ============================================================
-# FIREBASE REALTIME DB - INIT
+# FIREBASE REALTIME DB VIA REST (sin firebase-admin, sin PEM)
 # ============================================================
 ROOT = "elena-ossa"
 
@@ -122,97 +121,78 @@ HANGMAN_BANK = [
 ]
 
 
-def init_firebase() -> bool:
-    """Returns True if Firebase Admin is initialized and usable."""
-    if firebase_admin._apps:
-        return True
-    if "firebase" not in st.secrets:
-        return False
-    try:
-        cred_dict = {k: v for k, v in st.secrets["firebase"].items()}
-        database_url = cred_dict.pop("databaseURL", None)
-        if not database_url:
-            st.error("Falta `databaseURL` en `st.secrets.firebase`.")
-            return False
-        cred = credentials.Certificate(cred_dict)
-        firebase_admin.initialize_app(cred, {"databaseURL": database_url})
-        return True
-    except Exception as e:
-        st.error(f"Error inicializando Firebase: {e}")
-        return False
+def firebase_ready() -> bool:
+    return bool(st.secrets.get("FIREBASE_URL") and st.secrets.get("FIREBASE_SECRET"))
 
 
 def render_setup_screen():
     st.title("🪐 Configuración pendiente")
     st.markdown(
         "<div class='vektor-card'>"
-        "<div class='eyebrow'>Setup · Firebase Realtime DB</div>"
-        "<h3>Conectá Firebase en 4 pasos</h3>"
+        "<div class='eyebrow'>Setup · Firebase Realtime DB (REST simple)</div>"
+        "<h3>Conectá Firebase en 2 pasos</h3>"
         "<p style='color:var(--muted);font-size:13.5px;line-height:1.7;'>"
-        "Esta app usa Firebase Realtime DB para sincronizar en vivo lo que las agentes escriben "
-        "desde sus teléfonos con la pantalla del instructor. Necesitás configurar las credenciales una sola vez."
+        "Esta app sincroniza en vivo lo que las agentes escriben desde sus teléfonos con "
+        "la pantalla del instructor. Requiere sólo dos valores en Streamlit secrets — no hay JSON largo ni PEM."
         "</p>"
         "</div>",
         unsafe_allow_html=True
     )
     st.markdown("""
-    **1. Crear proyecto Firebase**
-    - Entra a [console.firebase.google.com](https://console.firebase.google.com) → **Add project** → dale un nombre (ej. `elena-ossa-training`).
+    **1. Obtener credenciales**
+    - En Firebase Console → tu proyecto → **Realtime Database**: copia la URL de arriba (ej. `https://vektor-training-elena-ossa-default-rtdb.firebaseio.com`).
+    - En **Project Settings → Service Accounts → Database secrets** → copia el token legacy.
 
-    **2. Activar Realtime Database**
-    - En el sidebar del proyecto: **Build → Realtime Database → Create database**.
-    - Elige la región más cercana (ej. `us-central1`).
-    - En reglas: **Start in test mode** (permite lectura/escritura por 30 días — suficiente para capacitaciones).
-
-    **3. Generar service account key**
-    - **Project Settings** (⚙️) → **Service accounts** → **Generate new private key** → descarga el JSON.
-
-    **4. Cargar credenciales en Streamlit Cloud**
-    - En [share.streamlit.io](https://share.streamlit.io/) → tu app → **Settings → Secrets**.
-    - Pega el siguiente bloque, reemplazando cada campo con lo del JSON descargado + el `databaseURL` de tu Realtime Database:
+    **2. Cargar en Streamlit Cloud**
+    - En [share.streamlit.io](https://share.streamlit.io/) → tu app → **Settings → Secrets** → pega este bloque simple (2 líneas):
 
     ```toml
-    [firebase]
-    databaseURL = "https://<tu-proyecto>-default-rtdb.firebaseio.com"
-    type = "service_account"
-    project_id = "..."
-    private_key_id = "..."
-    private_key = "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n"
-    client_email = "firebase-adminsdk-....iam.gserviceaccount.com"
-    client_id = "..."
-    auth_uri = "https://accounts.google.com/o/oauth2/auth"
-    token_uri = "https://oauth2.googleapis.com/token"
-    auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-    client_x509_cert_url = "..."
+    FIREBASE_URL = "https://TU-PROYECTO-default-rtdb.firebaseio.com"
+    FIREBASE_SECRET = "tu-token-legacy-de-database-secrets"
     ```
 
-    Guardá los secrets y la app se re-deploya sola. Al recargarla verás el dashboard live.
+    Save → redeploy automático en ~30s → dashboard live.
     """)
 
 
-if not init_firebase():
+if not firebase_ready():
     render_setup_screen()
     st.stop()
 
 
-# ============================================================
-# DB HELPERS
-# ============================================================
-def ref(path: str):
-    return fbdb.reference(f"{ROOT}/{path}")
+FIREBASE_URL = st.secrets["FIREBASE_URL"].rstrip("/")
+FIREBASE_SECRET = st.secrets["FIREBASE_SECRET"]
+
+
+def _url(path: str) -> str:
+    p = path.strip("/")
+    node = f"{ROOT}/{p}" if p else ROOT
+    return f"{FIREBASE_URL}/{node}.json?auth={FIREBASE_SECRET}"
 
 
 def db_get(path: str, default=None):
-    val = ref(path).get()
-    return val if val is not None else default
+    try:
+        r = requests.get(_url(path), timeout=6)
+        if r.status_code != 200:
+            return default
+        val = r.json()
+        return val if val is not None else default
+    except requests.RequestException:
+        return default
 
 
 def db_set(path: str, value):
-    ref(path).set(value)
+    try:
+        requests.put(_url(path), json=value, timeout=6)
+    except requests.RequestException:
+        pass
 
 
 def db_update(path: str, updates: dict):
-    ref(path).update(updates)
+    try:
+        requests.patch(_url(path), json=updates, timeout=6)
+    except requests.RequestException:
+        pass
 
 
 def seed_if_missing():
@@ -515,7 +495,6 @@ with tab_hoy:
             db_set(f"responses/{case_key.replace(' ', '_')}", {})
             st.rerun()
 
-    # Tablero central autoactualizado
     @st.fragment(run_every="2s")
     def render_response_board():
         active_case = st.session_state.get("active_case", "")
@@ -650,7 +629,6 @@ with tab_manana:
                 icon = "✅" if ok else "❌"
                 st.markdown(f"{icon} **P{num}** — Tu respuesta: `{picked}` · Correcta: `{correct}`")
 
-    # Historial de evaluaciones (live desde Firebase)
     @st.fragment(run_every="3s")
     def render_quiz_history():
         quiz_scores = db_get("quiz_scores", {})

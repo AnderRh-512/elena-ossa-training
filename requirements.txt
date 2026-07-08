@@ -1,2 +1,2 @@
 streamlit>=1.37
-firebase-admin>=6.5
+requests>=2.31
