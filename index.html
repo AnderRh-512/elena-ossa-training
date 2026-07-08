@@ -137,6 +137,14 @@ textarea,input{font-family:'Outfit',sans-serif;}
 .hkey:disabled{cursor:default;}
 .hang-progress{margin:8px 0 4px;}
 .hang-lesson{border-left:3px solid var(--green);background:var(--gg);padding:12px 14px;border-radius:0 12px 12px 0;margin-top:14px;font-size:13px;color:var(--text);line-height:1.6;}
+.hang-agents{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.hang-row{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--p2);border:1px solid var(--line);border-radius:10px;transition:border-color .2s;}
+.hang-row.won{border-color:var(--gdim);background:rgba(29,158,117,.08);}
+.hang-row.lost{border-color:rgba(217,105,79,.35);background:rgba(217,105,79,.06);}
+.hang-row-name{font-size:12.5px;font-weight:600;color:var(--text);}
+.hang-row-word{font-family:'Playfair Display',serif;font-size:18px;letter-spacing:5px;color:var(--gold);overflow-x:auto;white-space:nowrap;padding:0 4px;}
+.hang-row-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:80px;}
+.hang-row-status{font-size:11px;color:var(--muted);}
 
 /* PARTICIPANT */
 .pview{max-width:480px;margin:0 auto;padding:16px 16px 36px;}
@@ -341,7 +349,7 @@ let db = null;
 let listenerOn = false;
 const $R = document.getElementById('R');
 
-function emptyData(){ return {lb:{}, hang:{idx:0, guessed:[], wrong:0, lastBy:null}, rp:{}, quiz:{}, closing:{}}; }
+function emptyData(){ return {lb:{}, hang:{idx:0, perAgent:{}}, rp:{}, quiz:{}, closing:{}}; }
 const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const bById = id => S.blocks.find(b => b.id===id) || S.blocks[0];
 const bIdx = id => S.blocks.findIndex(b => b.id===id);
@@ -501,35 +509,41 @@ function renderPres(){
 }
 
 function renderPresHangman(){
-  const h = gData.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
-  const cur = HANGMAN_BANK[h.idx || 0];
-  const guessedSet = new Set(h.guessed || []);
-  const displayWord = cur.word.split('').map(l => guessedSet.has(l) ? l : '_').join(' ');
-  const solved = ![...displayWord].includes('_');
-  const lost = (h.wrong||0) >= 6;
+  const h = gData.hang || {idx:0, perAgent:{}};
+  const idx = h.idx || 0;
+  const cur = HANGMAN_BANK[idx];
+  const perAgent = h.perAgent || {};
 
-  const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
-    const hit = guessedSet.has(letter) && cur.word.includes(letter);
-    const miss = guessedSet.has(letter) && !cur.word.includes(letter);
-    const cls = 'hkey' + (hit?' hit':'') + (miss?' miss':'');
-    return `<button class="${cls}" data-hk="${letter}" ${guessedSet.has(letter)?'disabled':''}>${letter}</button>`;
+  const rows = PLAYERS.map(p => {
+    const st = perAgent[p] || {guessed:[], wrong:0, status:'playing'};
+    const guessedSet = new Set(st.guessed || []);
+    const displayWord = cur.word.split('').map(l => guessedSet.has(l) ? l : '_').join(' ');
+    let badge = '';
+    let rowCls = 'hang-row';
+    if(st.status === 'won'){ badge = '<span class="schip">✓ +10</span>'; rowCls += ' won'; }
+    else if(st.status === 'lost'){ badge = '<span class="schip" style="background:rgba(217,105,79,.3);color:var(--danger);">✗ −5</span>'; rowCls += ' lost'; }
+    else badge = '<span class="hang-row-status">jugando…</span>';
+    return `<div class="${rowCls}">
+      <div class="hang-row-name">${esc(p)}</div>
+      <div class="hang-row-word">${displayWord}</div>
+      <div class="hang-row-meta"><span class="hang-row-status">Err ${st.wrong||0}/6</span>${badge}</div>
+    </div>`;
   }).join('');
 
+  const allDone = PLAYERS.every(p => {
+    const st = perAgent[p];
+    return st && (st.status === 'won' || st.status === 'lost');
+  });
+
   return `<div class="card">
-    <div class="chead"><h3>🎯 Ahorcado orgánico · Palabra ${(h.idx||0)+1}/${HANGMAN_BANK.length}</h3><span class="tag taglive">Vivo</span></div>
-    <div class="hang-meta">Reemplaza el tecnicismo: <b>${esc(cur.replaces)}</b></div>
-    <div class="hang-word">${displayWord}</div>
-    <div class="hang-err">Errores: ${h.wrong||0} / 6 ${h.lastBy ? `· última letra: <b>${esc(h.lastBy)}</b>` : ''}</div>
-    <div class="hang-grid">${grid}</div>
-    ${solved ? `<div class="hang-lesson"><b>¡Resuelto!</b> ${esc(cur.lesson)}</div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="blaunch" id="hng-award">+10 pts a ${h.lastBy ? esc(h.lastBy) : '(elegir en leaderboard)'} y siguiente palabra</button>
-      </div>` : ''}
-    ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);"><b>Palabra perdida.</b> Era <b>${esc(cur.display)}</b>.</div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button class="blaunch" id="hng-retry">Reintentar misma palabra</button>
-        <button class="bpen" id="hng-penalize">−5 pts a ${h.lastBy ? esc(h.lastBy) : '(sin jugador)'} y siguiente palabra</button>
-      </div>` : ''}
+    <div class="chead"><h3>🎯 Ahorcado · Palabra ${idx+1}/${HANGMAN_BANK.length}</h3><span class="tag taglive">Vivo · Individual</span></div>
+    <div class="hang-meta">Palabra actual: <b>${esc(cur.display)}</b> — reemplaza <b>${esc(cur.replaces)}</b></div>
+    <div class="hang-agents">${rows}</div>
+    ${allDone ? '<div class="hang-lesson" style="margin-top:14px;">✅ <b>Todas terminaron.</b> Puntos ya asignados. Clic en Siguiente palabra para continuar.</div>' : ''}
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+      <button class="blaunch" id="hng-next">Siguiente palabra →</button>
+      <button class="bgh" id="hng-reset">Reintentar palabra actual (sin cambio de puntos)</button>
+    </div>
   </div>`;
 }
 
@@ -590,53 +604,21 @@ function bindPresEvents(){
       await setCtrl({bid:'b1', phase:'idle', aid:null});
     }
   };
-  // Hangman
-  document.querySelectorAll('[data-hk]').forEach(b => {
-    b.onclick = async () => {
-      const letter = b.dataset.hk;
-      const d = await getDataFresh();
-      const h = d.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
-      if((h.guessed||[]).includes(letter)) return;
-      const cur = HANGMAN_BANK[h.idx||0];
-      h.guessed = [...new Set([...(h.guessed||[]), letter])].sort();
-      h.lastBy = name; // presenter click attributed to Presentador
-      if(!cur.word.includes(letter)) h.wrong = (h.wrong||0) + 1;
-      d.hang = h;
-      await setData(d);
-    };
-  });
-  const hAward = document.getElementById('hng-award');
-  if(hAward) hAward.onclick = async () => {
+  // Hangman — presenter only navigates, doesn't play
+  const hNext = document.getElementById('hng-next');
+  if(hNext) hNext.onclick = async () => {
     const d = await getDataFresh();
-    const h = d.hang;
-    const cur = HANGMAN_BANK[h.idx||0];
-    const winner = h.lastBy;
-    if(winner && winner !== 'Presentador') d.lb[winner] = (d.lb[winner]||0) + 10;
-    h.idx = ((h.idx||0) + 1) % HANGMAN_BANK.length;
-    h.guessed = [];
-    h.wrong = 0;
-    h.lastBy = null;
-    await setData(d);
-  };
-  const hRetry = document.getElementById('hng-retry');
-  if(hRetry) hRetry.onclick = async () => {
-    const d = await getDataFresh();
-    d.hang.guessed = [];
-    d.hang.wrong = 0;
-    await setData(d);
-  };
-  const hPenalize = document.getElementById('hng-penalize');
-  if(hPenalize) hPenalize.onclick = async () => {
-    const d = await getDataFresh();
-    const loser = d.hang.lastBy;
-    if(loser && loser !== 'Presentador'){
-      d.lb = d.lb || {};
-      d.lb[loser] = Math.max(0, (d.lb[loser]||0) - 5);
-    }
+    d.hang = d.hang || {};
     d.hang.idx = ((d.hang.idx||0) + 1) % HANGMAN_BANK.length;
-    d.hang.guessed = [];
-    d.hang.wrong = 0;
-    d.hang.lastBy = null;
+    d.hang.perAgent = {};
+    await setData(d);
+  };
+  const hReset = document.getElementById('hng-reset');
+  if(hReset) hReset.onclick = async () => {
+    if(!confirm('¿Reiniciar palabra actual? Los puntos ya otorgados no se reversan.')) return;
+    const d = await getDataFresh();
+    d.hang = d.hang || {};
+    d.hang.perAgent = {};
     await setData(d);
   };
   // Roleplay
@@ -712,26 +694,29 @@ function renderPart(){
 }
 
 function renderPartHangman(){
-  const h = gData.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
-  const cur = HANGMAN_BANK[h.idx||0];
-  const guessedSet = new Set(h.guessed||[]);
+  const h = gData.hang || {idx:0, perAgent:{}};
+  const idx = h.idx || 0;
+  const cur = HANGMAN_BANK[idx];
+  const st = (h.perAgent||{})[name] || {guessed:[], wrong:0, status:'playing'};
+  const guessedSet = new Set(st.guessed||[]);
   const displayWord = cur.word.split('').map(l => guessedSet.has(l) ? l : '_').join(' ');
-  const solved = ![...displayWord].includes('_');
-  const lost = (h.wrong||0) >= 6;
+  const solved = st.status === 'won';
+  const lost = st.status === 'lost';
+  const done = solved || lost;
   const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
     const hit = guessedSet.has(letter) && cur.word.includes(letter);
     const miss = guessedSet.has(letter) && !cur.word.includes(letter);
     const cls = 'hkey' + (hit?' hit':'') + (miss?' miss':'');
-    return `<button class="${cls}" data-hk="${letter}" ${guessedSet.has(letter) || solved || lost ? 'disabled':''}>${letter}</button>`;
+    return `<button class="${cls}" data-hk="${letter}" ${guessedSet.has(letter) || done ? 'disabled':''}>${letter}</button>`;
   }).join('');
   return `<div class="card">
-    <div class="chead"><h3>🎯 Ahorcado orgánico</h3><span class="tag taglive">Palabra ${(h.idx||0)+1}/${HANGMAN_BANK.length}</span></div>
-    <div class="hang-meta">Reemplaza: <b>${esc(cur.replaces)}</b></div>
+    <div class="chead"><h3>🎯 Ahorcado orgánico</h3><span class="tag taglive">Palabra ${idx+1}/${HANGMAN_BANK.length}</span></div>
+    <div class="hang-meta">Reemplaza: <b>${esc(cur.replaces)}</b> · <b style="color:var(--green);">Este intento es tuyo</b></div>
     <div class="hang-word">${displayWord}</div>
-    <div class="hang-err">Errores del equipo: ${h.wrong||0} / 6 ${h.lastBy?`· última: <b>${esc(h.lastBy)}</b>`:''}</div>
+    <div class="hang-err">Tus errores: ${st.wrong||0} / 6</div>
     <div class="hang-grid">${grid}</div>
-    ${solved ? `<div class="hang-lesson"><b>¡Resuelto!</b> ${esc(cur.lesson)}</div>` : ''}
-    ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);">Palabra perdida. Era <b>${esc(cur.display)}</b>. El presentador puede reintentar.</div>` : ''}
+    ${solved ? `<div class="hang-lesson"><b>¡Resuelto! +10 pts sumados.</b> ${esc(cur.lesson)}</div>` : ''}
+    ${lost ? `<div class="hang-lesson" style="border-left-color:var(--danger);background:rgba(217,105,79,.08);"><b>Palabra perdida (−5 pts).</b> Era <b>${esc(cur.display)}</b>. Esperá a que el presentador avance a la siguiente palabra.</div>` : ''}
   </div>`;
 }
 
@@ -793,17 +778,38 @@ function renderPartClosing(){
 }
 
 function bindPartEvents(block){
-  // Hangman letter clicks
+  // Hangman letter clicks — each agent has their own state, points auto-awarded
   document.querySelectorAll('[data-hk]').forEach(b => {
     b.onclick = async () => {
       const letter = b.dataset.hk;
       const d = await getDataFresh();
-      const h = d.hang || {idx:0, guessed:[], wrong:0, lastBy:null};
-      if((h.guessed||[]).includes(letter)) return;
+      const h = d.hang || {idx:0, perAgent:{}};
+      h.perAgent = h.perAgent || {};
+      const st = h.perAgent[name] || {guessed:[], wrong:0, status:'playing', awarded:false};
+      if(st.status !== 'playing') return;
+      if((st.guessed||[]).includes(letter)) return;
       const cur = HANGMAN_BANK[h.idx||0];
-      h.guessed = [...new Set([...(h.guessed||[]), letter])].sort();
-      h.lastBy = name;
-      if(!cur.word.includes(letter)) h.wrong = (h.wrong||0) + 1;
+      st.guessed = [...new Set([...(st.guessed||[]), letter])].sort();
+      if(!cur.word.includes(letter)) st.wrong = (st.wrong||0) + 1;
+      // Check terminal states and auto-award/penalize
+      const gs = new Set(st.guessed);
+      const remaining = cur.word.split('').some(l => !gs.has(l));
+      if(!remaining){
+        st.status = 'won';
+        if(!st.awarded){
+          d.lb = d.lb || {};
+          d.lb[name] = (d.lb[name]||0) + 10;
+          st.awarded = true;
+        }
+      } else if((st.wrong||0) >= 6){
+        st.status = 'lost';
+        if(!st.awarded){
+          d.lb = d.lb || {};
+          d.lb[name] = Math.max(0, (d.lb[name]||0) - 5);
+          st.awarded = true;
+        }
+      }
+      h.perAgent[name] = st;
       d.hang = h;
       await setData(d);
     };
