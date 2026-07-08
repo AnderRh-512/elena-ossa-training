@@ -406,9 +406,10 @@ hr {
 # ============================================================
 if "players" not in st.session_state:
     st.session_state.players = {
-        "Camila":     {"score": 85, "last_answer": "Valoración personalizada"},
-        "Valentina":  {"score": 90, "last_answer": "Enlace seguro de pago telefónico"},
-        "Mariana":    {"score": 75, "last_answer": "Le explico los beneficios de la cabina"},
+        "Karen":    {"score": 0, "last_answer": "—"},
+        "Vanessa":  {"score": 0, "last_answer": "—"},
+        "Elena":    {"score": 0, "last_answer": "—"},
+        "Michelle": {"score": 0, "last_answer": "—"},
     }
 
 # HANGMAN - 4 palabras organicas rotan automaticamente
